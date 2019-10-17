@@ -54,8 +54,6 @@ def test_datasets_in_custom_path(tmpdir_factory):
 
 
 def test_structured_datasets(tmpdir):
-    basename = "test.yml"
-
     test_data = dict(x=[1, 2, 3, 4, 5], y='test_json')
 
     os.environ['CTAPIPE_SVC_PATH'] = ":".join([str(tmpdir)])

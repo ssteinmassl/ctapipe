@@ -3,6 +3,8 @@ import numpy as np
 from astropy import units as u
 from ctapipe.instrument import CameraGeometry
 import pytest
+import tempfile
+import os
 
 cam_ids = CameraGeometry.get_known_camera_names()
 
@@ -292,7 +294,7 @@ def test_hashing():
 def test_camera_from_name(camera_name):
     """ check we can construct all cameras from name"""
     camera = CameraGeometry.from_name(camera_name)
-    assert str(camera) == camera_name
+    assert str(camera).startswith(camera_name)
 
 
 @pytest.mark.parametrize("camera_name", CameraGeometry.get_known_camera_names())
@@ -306,3 +308,22 @@ def test_camera_coordinate_transform(camera_name):
     unit = geom.pix_x.unit
     assert np.allclose(geom.pix_x.to_value(unit), -trans_geom.pix_y.to_value(unit))
     assert np.allclose(geom.pix_y.to_value(unit), -trans_geom.pix_x.to_value(unit))
+
+
+def test_newest():
+    from ctapipe.instrument import CameraGeometry
+    geom = CameraGeometry.from_name('LSTCam')
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        os.environ['CTAPIPE_SVC_PATH'] = tmpdir + ':'
+
+        for version in [None, 1, 2, 5, 10]:
+            s = '' if version is None else f'-{version:03d}'
+            name = f'TEST{s}.camgeom.fits'
+
+            geom.version = version
+            geom.to_table().write(os.path.join(tmpdir, name))
+
+        assert 'TEST' in CameraGeometry.get_known_camera_names()
+        geom = CameraGeometry.from_name('TEST')
+        assert geom.version == 10

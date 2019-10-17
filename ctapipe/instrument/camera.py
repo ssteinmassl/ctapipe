@@ -63,13 +63,15 @@ class CameraGeometry:
     pix_rotation: value convertable to an `astropy.coordinates.Angle`
         rotation angle with unit (e.g. 12 * u.deg), or "12d"
     cam_rotation: overall camera rotation with units
+    version: int
+        Version of the camera geometry
     """
 
     _geometry_cache = {}  # dictionary CameraGeometry instances for speed
 
     def __init__(self, cam_id, pix_id, pix_x, pix_y, pix_area, pix_type,
                  pix_rotation="0d", cam_rotation="0d",
-                 neighbors=None, apply_derotation=True, frame=None):
+                 neighbors=None, apply_derotation=True, frame=None, version=None):
 
         if pix_x.ndim != 1 or pix_y.ndim != 1:
             raise ValueError(f'Pixel coordinates must be 1 dimensional, got {pix_x.ndim}')
@@ -86,6 +88,7 @@ class CameraGeometry:
         self.cam_rotation = Angle(cam_rotation)
         self._neighbors = neighbors
         self.frame = frame
+        self.version = version
 
         if neighbors is not None:
             if isinstance(neighbors, list):
@@ -292,8 +295,11 @@ class CameraGeometry:
         if version is None:
             pattern = rf'{camera_id}(-\d+)?\.camgeom\.fits(\.gz)?'
             # return the newest version of multiple exist
-            tabname = sorted(find_all_matching_datasets(pattern))[-1]
-            print(tabname)
+            # the key is needed so that FOO.camgeom is before FOO-001.camgeom
+            tabname = sorted(
+                find_all_matching_datasets(pattern),
+                key=lambda s: s.split('.')[0]
+            )[-1]
         else:
             verstr = f"-{version:03d}"
             tabname = "{camera_id}{verstr}.camgeom".format(camera_id=camera_id,
@@ -306,15 +312,22 @@ class CameraGeometry:
         """ convert this to an `astropy.table.Table` """
         # currently the neighbor list is not supported, since
         # var-length arrays are not supported by astropy.table.Table
-        return Table([self.pix_id, self.pix_x, self.pix_y, self.pix_area],
-                     names=['pix_id', 'pix_x', 'pix_y', 'pix_area'],
-                     meta=dict(PIX_TYPE=self.pix_type,
-                               TAB_TYPE='ctapipe.instrument.CameraGeometry',
-                               TAB_VER='1.0',
-                               CAM_ID=self.cam_id,
-                               PIX_ROT=self.pix_rotation.deg,
-                               CAM_ROT=self.cam_rotation.deg,
-                               ))
+        meta = dict(
+            PIX_TYPE=self.pix_type,
+            TAB_TYPE='ctapipe.instrument.CameraGeometry',
+            TAB_VER='1.0',
+            CAM_ID=self.cam_id,
+            PIX_ROT=self.pix_rotation.deg,
+            CAM_ROT=self.cam_rotation.deg,
+        )
+        if self.version is not None:
+            meta['VERSION'] = self.version
+
+        return Table(
+            [self.pix_id, self.pix_x, self.pix_y, self.pix_area],
+            names=['pix_id', 'pix_x', 'pix_y', 'pix_area'],
+            meta=meta,
+        )
 
     @classmethod
     def from_table(cls, url_or_table, **kwargs):
@@ -346,6 +359,7 @@ class CameraGeometry:
             pix_type=tab.meta['PIX_TYPE'],
             pix_rotation=Angle(tab.meta['PIX_ROT'] * u.deg),
             cam_rotation=Angle(tab.meta['CAM_ROT'] * u.deg),
+            version=tab.meta.get('VERSION', None),
         )
 
     def __repr__(self):
