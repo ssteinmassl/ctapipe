@@ -265,7 +265,7 @@ class CameraGeometry:
         list(str)
         """
 
-        pattern = r'(.*)\.camgeom\.fits(\.gz)?'
+        pattern = r'(.*?)(-\d+)?\.camgeom\.fits(\.gz)?'
         return find_all_matching_datasets(pattern, regexp_group=1)
 
     @classmethod
