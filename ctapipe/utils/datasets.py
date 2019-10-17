@@ -178,7 +178,10 @@ def get_table_dataset(table_name, role='resource', **kwargs):
     }
 
     for table_type in types_to_try:
-        filename = table_name + table_type
+        if table_name.endswith(table_type):
+            filename = table_name
+        else:
+            filename = table_name + table_type
         try:
             fullname = get_dataset_path(filename)
             if fullname:

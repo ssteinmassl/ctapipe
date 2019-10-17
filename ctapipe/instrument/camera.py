@@ -292,12 +292,13 @@ class CameraGeometry:
         if version is None:
             pattern = rf'{camera_id}(-\d+)?\.camgeom\.fits(\.gz)?'
             # return the newest version of multiple exist
-            return sorted(find_all_matching_datasets(pattern))[-1]
+            tabname = sorted(find_all_matching_datasets(pattern))[-1]
+            print(tabname)
         else:
             verstr = f"-{version:03d}"
+            tabname = "{camera_id}{verstr}.camgeom".format(camera_id=camera_id,
+                                                           verstr=verstr)
 
-        tabname = "{camera_id}{verstr}.camgeom".format(camera_id=camera_id,
-                                                       verstr=verstr)
         table = get_table_dataset(tabname, role='dl0.tel.svc.camera')
         return CameraGeometry.from_table(table)
 
