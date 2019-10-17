@@ -290,7 +290,9 @@ class CameraGeometry:
         """
 
         if version is None:
-            verstr = ''
+            pattern = rf'{camera_id}(-\d+)?\.camgeom\.fits(\.gz)?'
+            # return the newest version of multiple exist
+            return sorted(find_all_matching_datasets(pattern))[-1]
         else:
             verstr = f"-{version:03d}"
 
