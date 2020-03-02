@@ -30,12 +30,10 @@ class Field:
 
     def __set_name__(self, owner, name):
         self.name = name
-        # register field with owner class
-        owner.fields[name] = self
 
     def __get__(self, instance, instance_type=None):
         if instance is not None:
-            return instance.__data__.get(self.name)
+            return instance.__data__[self.name]
         return self.field
 
     def __set__(self, instance, value):
@@ -77,13 +75,20 @@ class ContainerMeta(type):
     and no new fields can be added to a container by accident.
     """
     def __new__(cls, name, bases, dct):
-        dct["__slots__"] = ("meta", "prefix", "__data__")
-        dct['fields'] = {}
+        fields = {}
 
         # inherit fields from baseclasses
         for b in reversed(bases):
             if issubclass(b, Container):
-                dct['fields'].update(b.fields)
+                fields.update(b.fields)
+
+        # fields directly defined on this class
+        for k, v in dct.items():
+            if isinstance(v, Field):
+                fields[k] = v
+
+        dct["__slots__"] = ("meta", "prefix", "__data__")
+        dct["fields"] = fields
 
         # if prefix was not set as a class variable, build a default one
         # __slots__ cannot be provided with defaults
@@ -165,8 +170,10 @@ class Container(metaclass=ContainerMeta):
 
         return ((self.prefix + "_" + k, getattr(self, k)) for k in self.fields.keys())
 
-    def keys(self):
+    def keys(self, add_prefix=False):
         """Get the keys of the container"""
+        if add_prefix:
+            return (self.prefix + "_" + k for k in self.fields.keys())
         return self.fields.keys()
 
     def values(self):
@@ -194,14 +201,12 @@ class Container(metaclass=ContainerMeta):
             for key, val in self.items(add_prefix=add_prefix):
                 if isinstance(val, Container) or isinstance(val, Map):
                     if flatten:
-                        d.update(
-                            {
-                                f"{key}_{k}": v
-                                for k, v in val.as_dict(
-                                    recursive, add_prefix=add_prefix
-                                ).items()
-                            }
-                        )
+                        d.update({
+                            f"{key}_{k}": v
+                            for k, v in val.as_dict(
+                                recursive, add_prefix=add_prefix
+                            ).items()
+                        })
                     else:
                         d[key] = val.as_dict(
                             recursive=recursive, flatten=flatten, add_prefix=add_prefix
@@ -223,8 +228,8 @@ class Container(metaclass=ContainerMeta):
         update more than one parameter at once (e.g. `update(x=3,y=4)`
         or `update(**dict_of_values)`)
         """
-        for key in values:
-            self[key] = values[key]
+        for key, value in values.items():
+            setattr(self, key, value)
 
     def __str__(self):
         return pformat(self.as_dict(recursive=True))
