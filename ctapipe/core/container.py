@@ -28,21 +28,41 @@ class Field:
         self.unit = unit
         self.ucd = ucd
 
+    def __set_name__(self, owner, name):
+        self.name = name
+        # register field with owner class
+        owner.fields[name] = self
+
+    def __get__(self, instance, instance_type=None):
+        if instance is not None:
+            return instance.__data__.get(self.name)
+        return self.field
+
+    def __set__(self, instance, value):
+        instance.__data__[self.name] = value
+
     def __repr__(self):
-        desc = f"{self.description}"
-        if self.unit is not None:
-            desc += f" [{self.unit}]"
-        return desc
+        return (
+            f"Field(name={self.name!r}, default={self.default}"
+            f", unit={self.unit}"
+            f", desc={self.description!r}"
+            ")"
+        )
 
 
 class DeprecatedField(Field):
     """ used to mark which fields may be removed in next version """
     def __init__(self, default, description="", unit=None, ucd=None, reason=""):
         super().__init__(default=default, description=description, unit=unit, ucd=ucd)
-        warnings.warn(f"Field {self} is deprecated. {reason}", DeprecationWarning)
         self.reason = reason
 
+    def __get__(self, instance, instance_type):
+        warnings.warn(f"Field {self} is deprecated. {self.reason}", DeprecationWarning)
+        return super().__get__(instance, instance_type)
 
+    def __set__(self, instance, value):
+        warnings.warn(f"Field {self} is deprecated. {self.reason}", DeprecationWarning)
+        super().__set__(instance, value)
 
 
 class ContainerMeta(type):
@@ -56,28 +76,23 @@ class ContainerMeta(type):
     This makes sure, that the metadata is immutable,
     and no new fields can be added to a container by accident.
     """
-
     def __new__(cls, name, bases, dct):
-        field_names = [k for k, v in dct.items() if isinstance(v, Field)]
-        dct["__slots__"] = tuple(field_names + ["meta", "prefix"])
-        dct["fields"] = {}
+        dct["__slots__"] = ("meta", "prefix", "__data__")
+        dct['fields'] = {}
 
         # inherit fields from baseclasses
-        for b in bases:
+        for b in reversed(bases):
             if issubclass(b, Container):
-                for k, v in b.fields.items():
-                    dct["fields"][k] = v
-
-        for k in field_names:
-            dct["fields"][k] = dct.pop(k)
-
-        new_cls = type.__new__(cls, name, bases, dct)
+                dct['fields'].update(b.fields)
 
         # if prefix was not set as a class variable, build a default one
+        # __slots__ cannot be provided with defaults
+        # via class variables, so we use a `container_prefix` class variable
+        # and an instance variable `prefix` in `__slots__`
         if "container_prefix" not in dct:
-            new_cls.container_prefix = name.lower().replace("container", "")
+            dct['container_prefix'] = name.lower().replace("container", "")
 
-        return new_cls
+        return super().__new__(cls, name, bases, dct)
 
 
 class Container(metaclass=ContainerMeta):
@@ -131,22 +146,17 @@ class Container(metaclass=ContainerMeta):
 
     def __init__(self, **fields):
         self.meta = {}
+        self.__data__ = {}
         # __slots__ cannot be provided with defaults
         # via class variables, so we use a `container_prefix` class variable
         # and an instance variable `prefix` in `__slots__`
         self.prefix = self.container_prefix
 
         for k in set(self.fields).difference(fields):
-            setattr(self, k, deepcopy(self.fields[k].default))
+            self.__data__[k] = deepcopy(self.fields[k].default)
 
         for k, v in fields.items():
-            setattr(self, k, v)
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        return setattr(self, key, value)
+            self.__data__[k] = v
 
     def items(self, add_prefix=False):
         """Generator over (key, value) pairs for the items"""
@@ -203,11 +213,10 @@ class Container(metaclass=ContainerMeta):
     def reset(self, recursive=True):
         """ set all values back to their default values"""
         for name, value in self.fields.items():
-            if isinstance(value, Container):
-                if recursive:
-                    getattr(self, name).reset()
+            if recursive and isinstance(value, Container):
+                self.__data__[name].reset()
             else:
-                setattr(self, name, deepcopy(self.fields[name].default))
+                self.__data__[name] = deepcopy(self.fields[name].default)
 
     def update(self, **values):
         """
@@ -232,6 +241,12 @@ class Container(metaclass=ContainerMeta):
             lines = wrap(desc, 80, subsequent_indent=" " * 32)
             text.extend(lines)
         return "\n".join(text)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        return setattr(self, key, value)
 
 
 class Map(defaultdict):
