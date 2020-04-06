@@ -225,9 +225,9 @@ def analyze_muon_event(event):
         ):
             muonringparam.ring_containment = ring_containment(
                 muonringparam.ring_radius,
-                muon_cuts["CamRad"][dict_index],
                 muonringparam.ring_center_x,
                 muonringparam.ring_center_y,
+                muon_cuts["CamRad"][dict_index],
             )
 
             # Guess HESS is 0.16
