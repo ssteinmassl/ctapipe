@@ -1,0 +1,7 @@
+<map id="inheritance0e9014c284" name="inheritance0e9014c284">
+<area shape="rect" id="node1" title="Base class of all Components." alt="" coords="308,4,375,21"/>
+<area shape="rect" id="node6" title="A component that needs a SubarrayDescription to be constructed, and which" alt="" coords="408,4,516,21"/>
+<area shape="rect" id="node4" title="The base class for all classes that have descriptors." alt="" coords="4,4,86,21"/>
+<area shape="rect" id="node5" href="../../api/ctapipe.image.cleaning.ImageCleaner.html#ctapipe.image.cleaning.ImageCleaner" target="_top" title="Abstract class for all configurable Image Cleaning algorithms. &#160;&#160;Use" alt="" coords="549,4,624,21"/>
+<area shape="rect" id="node7" href="../../api/ctapipe.image.cleaning.TailcutsImageCleaner.html#ctapipe.image.cleaning.TailcutsImageCleaner" target="_top" title="Clean images using the standard picture/boundary technique. See" alt="" coords="657,4,764,21"/>
+</map>

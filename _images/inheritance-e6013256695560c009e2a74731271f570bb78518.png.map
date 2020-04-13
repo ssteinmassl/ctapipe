@@ -1,0 +1,11 @@
+<map id="inheritancee637f92f90" name="inheritancee637f92f90">
+<area shape="rect" id="node1" href="../../api/ctapipe.image.extractor.BaselineSubtractedNeighborPeakWindowSum.html#ctapipe.image.extractor.BaselineSubtractedNeighborPeakWindowSum" target="_top" title="Extractor that first subtracts the baseline before summing in a" alt="" coords="583,3,765,18"/>
+<area shape="rect" id="node2" href="../../api/ctapipe.image.extractor.NeighborPeakWindowSum.html#ctapipe.image.extractor.NeighborPeakWindowSum" target="_top" title="Extractor which sums in a window about the" alt="" coords="445,3,555,18"/>
+<area shape="rect" id="node3" title="Base class of all Components." alt="" coords="263,61,320,75"/>
+<area shape="rect" id="node7" href="../../api/ctapipe.image.extractor.ImageExtractor.html#ctapipe.image.extractor.ImageExtractor" target="_top" title="ImageExtractor" alt="" coords="348,61,417,75"/>
+<area shape="rect" id="node6" href="../../api/ctapipe.image.extractor.FixedWindowSum.html#ctapipe.image.extractor.FixedWindowSum" target="_top" title="Extractor that sums within a fixed window defined by the user." alt="" coords="462,32,538,47"/>
+<area shape="rect" id="node8" href="../../api/ctapipe.image.extractor.FullWaveformSum.html#ctapipe.image.extractor.FullWaveformSum" target="_top" title="Extractor that sums the entire waveform." alt="" coords="461,61,539,75"/>
+<area shape="rect" id="node9" href="../../api/ctapipe.image.extractor.GlobalPeakWindowSum.html#ctapipe.image.extractor.GlobalPeakWindowSum" target="_top" title="Extractor which sums in a window about the" alt="" coords="450,89,550,104"/>
+<area shape="rect" id="node11" href="../../api/ctapipe.image.extractor.LocalPeakWindowSum.html#ctapipe.image.extractor.LocalPeakWindowSum" target="_top" title="Extractor which sums in a window about the" alt="" coords="453,118,547,133"/>
+<area shape="rect" id="node10" title="The base class for all classes that have descriptors." alt="" coords="3,61,73,75"/>
+</map>
